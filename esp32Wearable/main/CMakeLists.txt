@@ -1,0 +1,18 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "display.c"
+        "buttons.c"
+        "radio.c"
+    INCLUDE_DIRS
+        "."
+    PRIV_REQUIRES
+        esp_lcd
+        esp_driver_spi
+        esp_driver_gpio
+        esp_wifi
+        esp_event
+        esp_netif
+        esp_timer
+        nvs_flash
+)
