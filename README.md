@@ -79,7 +79,7 @@ Después se abre `http://localhost:3000`. El simulador busca la placa solo; para
 
 #### Vista (sin tener las placas conectadas).
 
-![simulacion](docs/simulacion.gif)
+![simulación](docs/simulacion.gif)
 
 ## Equipo: The Be Sharps
 
