@@ -1,0 +1,18 @@
+{
+  "name": "simulador-escalada",
+  "version": "1.0.0",
+  "description": "Simulador de tensión de escalada deportiva: web + Node.js + ESP32 por Serial a 50Hz",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0",
+    "express": "^4.19.2",
+    "serialport": "^12.0.0",
+    "socket.io": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

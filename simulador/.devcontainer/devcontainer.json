@@ -1,0 +1,27 @@
+{
+  "name": "simulador-hackathon-dev-container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "node",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Simulador web" }
+  },
+  // /dev del host + reglas cgroup (188=ttyUSB, 166=ttyACM): el ESP32 se puede conectar antes o después de arrancar.
+  "runArgs": [
+    "--group-add=dialout",
+    "--device-cgroup-rule=c 188:* rmw",
+    "--device-cgroup-rule=c 166:* rmw"
+  ],
+  "mounts": ["source=/dev,target=/dev,type=bind"],
+  "containerEnv": {
+    "SERIAL_BAUD": "115200"
+  },
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": ["eamodio.gitlens"]
+    }
+  }
+}

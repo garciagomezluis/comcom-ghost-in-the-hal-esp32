@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Be Sharps: SIMULADOR DE TENSIÓN DE ESCALADA</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; font-family: system-ui, sans-serif; background: #12161c; color: #e6e9ee; }
+    header { flex: none; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; background: #1b212a; }
+    h1 { font-size: 1.6rem; margin: 0; }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .brand img { height: 68px; width: auto; display: block; }
+    .badge { padding: 5px 14px; border-radius: 14px; font-size: .95rem; background: #444; }
+    .badge.ok { background: #1f7a3d; }
+    .badge.off { background: #8a3030; }
+    main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(300px, 40%) 1fr; gap: 16px; padding: 16px 20px; }
+    .stage { position: relative; min-height: 0; background: #243040; border-radius: 8px; overflow: hidden; }
+    #climber { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .side { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+    button { padding: 10px 18px; border: 0; border-radius: 6px; font-size: .95rem; cursor: pointer; color: #fff; background: #2f6fed; }
+    button[data-state="caer"] { background: #c0392b; }
+    button[data-state="enganchar"] { background: #d68910; }
+    button[data-state="descansar"] { background: #6c7a89; }
+    #btn-finish { background: #8e44ad; margin-left: auto; }
+    #btn-reset { background: #34495e; }
+    .mass { display: flex; align-items: center; gap: 6px; }
+    .mass input { width: 64px; padding: 8px; border-radius: 6px; border: 1px solid #3a4452; background: #12161c; color: #e6e9ee; }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    button.active { outline: 3px solid #fff; }
+    .readout { display: flex; flex-wrap: wrap; gap: 8px 24px; font-variant-numeric: tabular-nums; }
+    .readout b { color: #7fd1ff; }
+    .board { background: #1b212a; border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .panel-title { margin: 0; font-size: 1.6rem; line-height: 1.2; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .board .panel-title { color: #ffd166; }
+    .chart-panel .panel-title { color: #7fd1ff; }
+    .board-status { display: flex; flex-wrap: wrap; gap: 4px 24px; }
+    .board-status b { color: #ffd166; }
+    .board-events { list-style: none; margin: 0; padding: 0; max-height: 96px; overflow-y: auto; font-size: .85rem; font-variant-numeric: tabular-nums; }
+    .board-events li { padding: 2px 0; color: #aab; }
+    .board-events li time { color: #6c7a89; margin-right: 8px; }
+    .board-events li.ev-caida { color: #ff9f43; }
+    .board-events li.ev-emergencia { color: #ff5d73; font-weight: 600; }
+    .board-events:empty::before { content: 'Sin eventos'; color: #6c7a89; }
+    .chart-panel { flex: 1; min-height: 0; background: #1b212a; border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .chart-box { flex: 1; min-height: 0; position: relative; }
+    @media (max-width: 900px) {
+      body { overflow: auto; height: auto; }
+      main { grid-template-columns: 1fr; }
+      .stage { height: 80vh; }
+      .chart-panel { height: 320px; flex: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="team.png" alt="The Be Sharps">
+      <h1>The Be Sharps: SIMULADOR DE TENSIÓN DE ESCALADA</h1>
+    </div>
+    <div>
+      <span id="ws-status" class="badge off">WebSocket</span>
+      <span id="serial-status" class="badge off">ESP32 / Serial</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="stage" id="stage"><canvas id="climber"></canvas></div>
+
+    <div class="side">
+      <div class="controls">
+        <button data-state="subir">Subir</button>
+        <button data-state="bajar" hidden>Bajar</button>
+        <button data-state="descansar" hidden>Descansar</button>
+        <button data-state="enganchar">Enganchar</button>
+        <button data-state="caer">Caer</button>
+        <button id="btn-finish">Agregar tope</button>
+        <button id="btn-reset">Reiniciar</button>
+        <label class="mass">Masa <input id="mass" type="number" min="50" max="100" step="1" value="70" disabled> kg</label>
+      </div>
+
+      <div class="readout">
+        <span>Estado: <b id="state-label">-</b></span>
+        <span>Altura: <b id="height-value">0.0 m</b></span>
+        <span>Tensión base: <b id="base-value">0.0 kgf</b></span>
+        <span>Valor enviado (con ruido): <b id="final-value">0.0 kgf</b></span>
+      </div>
+
+      <div class="board">
+        <h2 class="panel-title">Data recibida por la ESP32 en tierra</h2>
+        <div class="board-status">
+          <span>Placa: <b id="board-estado">-</b></span>
+          <span>Motor: <b id="board-motor">-</b></span>
+          <span>Último cmd: <b id="board-cmd">-</b></span>
+        </div>
+        <ul id="board-events" class="board-events"></ul>
+      </div>
+
+      <div class="chart-panel">
+        <h2 class="panel-title">Data SIMULADA enviada a la ESP32 en tierra</h2>
+        <div class="chart-box"><canvas id="chart"></canvas></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/vendor/chart.umd.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
