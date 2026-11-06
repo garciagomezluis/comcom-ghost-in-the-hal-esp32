@@ -4,7 +4,7 @@
 
 Organizado por la Comisión de Estudiantes de Computación - FCEyN - UBA
 
-[Sitio del Evento](https://web.archive.org/web/20261029000234/https://comcom.dc.uba.ar/hackaton/)
+[Sitio del Evento](https://web.archive.org/web/20261106134435/comcom.dc.uba.ar/hackaton/)
 
 [Presentación](docs/presentacion.pdf)
 
